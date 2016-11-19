@@ -19,7 +19,7 @@ class ProcessHomePage:
     def ExecuteURLS(self):
         self.InsertQuery = """INSERT INTO home_page_links (link_text, links, home_url_id) VALUES (%s,%s, %s)"""
         self.db = db.DB()
-        statement = """select id, url from urls where status = 'new' and id > 2100 limit 100"""
+        statement = """select id, url from urls where status = 'new' and id > 3500 limit 100"""
         rows = self.db.executeSelectAll(statement)
         nLen = len(rows)
         nCtr = 0

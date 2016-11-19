@@ -25,7 +25,7 @@ class ProcessContactUSPage:
 
         url = "http://www.vidzpros.com/contact.html"
 
-        #self.ProcessPage()
+        self.ProcessPage()
 
 
         print "Time consumed: ", time.time() - startTime
@@ -33,8 +33,10 @@ class ProcessContactUSPage:
 
     def GetURLString(self, url):
         r = requests.get(url)
-        self.soup = BeautifulSoup( r.content, 'html.parser' )
-    def ProcessPage(self):
+        self.soup = BeautifulSoup( r.content, 'lxml' )
+
+
+    def ProcessPagesFromDB(self):
         self.db = db.DB()
         statement = """select id, url from contactus_url where status = 'New' limit 1"""
         rows = self.db.executeSelectAll(statement)
@@ -48,16 +50,32 @@ class ProcessContactUSPage:
             url = url.strip()
             url = "http://bizee.in/contacts.php"
             url = "http://www.vidzpros.com/contact.html"
-            self.GetURLString(url)
+            self.ProcessPage(url)
 
-            forms = self.GetForms()
-            #print forms
-            values = self.FilterInputData(forms)
-            #print str(len(values)) + " | " + url, values
+    def ProcessPage(self, url = ''):
+        url = "http://www.vidzpros.com/contact.html"
+        self.GetURLString(url)
+        #self.GetPageStrings()
 
-            #print data, url
-            #time.sleep(15)
+        self.ProcessForms(self.GetForms())
 
+
+    def GetPageStrings(self):
+        strings = self.soup.strings
+        for string in strings:
+            if not '\n' in string:
+                print "string: ", repr(string)
+
+    def ProcessForms(self, forms):
+        nCtr = 0
+        for form in forms:
+            nCtr +=1
+            formElement = form.find_all()
+            nLen = len(formElement)
+            i = 0
+            for tag in formElement:
+                i +=1
+                print "Form: " + str(nCtr) + " | "+ str(i) + "/" + str(nLen), tag
 
     def GetForms(self):
         return self.soup.find_all('form')
@@ -79,28 +97,35 @@ class ProcessContactUSPage:
             #     print "Counter: " + str(nCtr) + "/" + str(nLen), data
 
             #########Loop on All type of element.Tag & NavigationString##########
+            print "data ----> ", data
             for tag in data:
                 classtype = str(type(tag))
                 # if nCtr==2:
                 #     print "Tag: " + classtype, tag
                 if ("<class 'bs4.element.Tag'>" in classtype):
-                    tagdata = tag.find_all()
+                    if nCtr == 2:
+                        print "tag  ----> ", tag
+                    tagdata = tag.find_all(["label", "input", "a", "textarea", "button"])
+
                     lastElement = ''
                     ###########Loop on all Tag Elements##############
+                    #tagdata = self.SplitElementsfromString(tagdata)
                     if nCtr == 2:
-                        print "TagData: ", tagdata
-                    tagdata = self.SplitElementsfromString(tagdata)
+                        print "TagData: " + str(len(tagdata))+ str(type(tagdata)), tagdata
                     for d in tagdata:
-                        if nCtr ==2:
+                        #if nCtr ==2:
 
 
-                            print "Element: " + "|", d
+                            #print "Element: " + "|", d
                         #self.ValidateElement(d)
                         #print "TagData: ", d
 
-                        if 'label' in d:
+                        #if 'label' in d:
+                        if d.name == 'label':
+                            # print "Element:", d
+                            # print "d.contents: ", d.contents
                             lastElementValue = self.GetLabelName(d.contents)
-                            print "Label: ", lastElementValue
+                            #print "Label: ", lastElementValue
 
                         # if d.name == 'label':
                         #     lastElementValue = self.GetLabelName(d.contents)

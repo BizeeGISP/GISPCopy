@@ -12,24 +12,25 @@ class ProcessContactUSPage:
     updateQuery = ""
     InsertQuery = ""
 
-    InputType   = [ "text", "email", "submit", "radio", "checkbox", "button", "number", "date" ]
-    InputName   = [ "name" ]
-    InputEmail  = [ "email" ]
-    InputPhone  = [ "phone" ]
-    InputDesc   = [ "comment" ]
-    Elements    = [ "name", "email", "telephone", "phone", "comment" ]
-    excludeType = [ "password" ]
+    InputType    = [ "text", "email", "submit", "radio", "checkbox", "button", "number", "date" ]
+    InputName    = [ "name" ]
+    InputEmail   = [ "email" ]
+    InputPhone   = [ "phone" ]
+    InputDesc    = [ "comment" ]
+    Elements     = [ "name", "email", "telephone", "phone", "comment" ]
+    excludeType  = [ "password" ]
+    InputElement = [ "input", "textarea" ]
+    LastElement  = ""
+    LabelName    = ""
+    DataValues   = []
 
     def __init__(self):
         startTime = time.time()
 
-        url = "http://www.vidzpros.com/contact.html"
-
         self.ProcessPage()
-
+        #self.ProcessPagesFromDB()
 
         print "Time consumed: ", time.time() - startTime
-
 
     def GetURLString(self, url):
         r = requests.get(url)
@@ -67,75 +68,111 @@ class ProcessContactUSPage:
                 print "string: ", repr(string)
 
     def ProcessForms(self, forms):
-        nCtr = 0
+        nform = 0
         for form in forms:
-            nCtr +=1
+            nform +=1
             formElement = form.find_all()
             nLen = len(formElement)
             i = 0
+            processData = []
             for tag in formElement:
                 i +=1
-                print "Form: " + str(nCtr) + " | "+ str(i) + "/" + str(nLen), tag
+                #print "Form: " + str(nform) + " | "+ str(i) + "/" + str(nLen) + " | " + tag.name, tag
+                data = self.ProcessElement(tag)
+                if len(data) > 0:
+                    data[0] = nform
+                    #print "Data -->", data
+                    processData.append(data)
+            print "ProcessData ---> " + str(len(processData)), processData
+
+    def ProcessElement(self,element):
+        DataValues = []
+        if ( element.name in self.InputElement ) or ( element.name == 'button' ):
+            DataValues = self.GetInputProperties(element)
+        # elif ( element.name == 'button' ):
+        #     DataValues = self.GetButtonProperties(element)
+
+        #Should be executed always after processing element
+        self.RecordLastElement(element)
+        return DataValues
+    def GetInputProperties(self, element):
+        attr                = element.attrs
+        input_label         = self.GetLastLabelName(element)
+        input_placeholder   = self.GetDictKeyValue( attr, 'placeholder' )
+        input_type          = self.GetDictKeyValue( attr, 'type' )
+        input_id            = self.GetDictKeyValue( attr, 'id'   )
+        input_name          = self.GetDictKeyValue( attr, 'name' )
+        input_value         = self.GetDictKeyValue( attr, 'value')
+        content             = self.GetElementContentName(element)
+
+            #form, label, name, placeholder, element_id, type, value, status"""
+        return [ 0, input_label, input_name, input_placeholder, input_id, input_type, input_value, content, 'New']
+
+    def GetDictKeyValue(self, dictAttr, key):
+        keys = dictAttr.keys()
+        value = ""
+        if key in keys:
+            value = dictAttr[key]
+        return value
+    def RecordLastElement(self, element):
+        if ('span' == element.name ) or ( 'div' == element.name ):
+            #print "Escaping: " + self.LastElement, self.LabelName
+            return
+        elif 'label' == element.name:
+            self.LastElement = element.name
+            self.LabelName = self.GetElementContentName(element)
+        else:
+            #print element.name, self.LastElement + " | " + self.LabelName
+            self.LastElement = element.name
+            self.LabelName = ""
+
+    def GetLastLabelName(self, element):
+        LabelName = ""
+        #print element.name in self.InputElement, 'label' == self.LastElement
+        if ( element.name in self.InputElement ) and ( 'label' == self.LastElement ):
+            LabelName = self.LabelName
+            #print LabelName
+        return LabelName
+    def GetElementContentName(self, element):
+        content = element.contents
+        labelName = ""
+        for data in content:
+            #if isinstance(data, type(data)):
+            if str(type(data)) == "<class 'bs4.element.NavigableString'>":
+                labelName += str(data)
+        return labelName
 
     def GetForms(self):
         return self.soup.find_all('form')
 
-    def FilterInputData(self, form):
-        filterData = []
-        nLen = len(form)
-        nCtr = 0
-        #########Loop on All the forms found in Contact Us Page########
-        for formdata in form:
-            nCtr += 1
-
-            data = formdata.contents
-
-            #self.AnalyzeformList(data)
-
-            # if nCtr ==2:
-            #
-            #     print "Counter: " + str(nCtr) + "/" + str(nLen), data
-
-            #########Loop on All type of element.Tag & NavigationString##########
-            print "data ----> ", data
-            for tag in data:
-                classtype = str(type(tag))
-                # if nCtr==2:
-                #     print "Tag: " + classtype, tag
-                if ("<class 'bs4.element.Tag'>" in classtype):
-                    if nCtr == 2:
-                        print "tag  ----> ", tag
-                    tagdata = tag.find_all(["label", "input", "a", "textarea", "button"])
-
-                    lastElement = ''
-                    ###########Loop on all Tag Elements##############
-                    #tagdata = self.SplitElementsfromString(tagdata)
-                    if nCtr == 2:
-                        print "TagData: " + str(len(tagdata))+ str(type(tagdata)), tagdata
-                    for d in tagdata:
-                        #if nCtr ==2:
-
-
-                            #print "Element: " + "|", d
-                        #self.ValidateElement(d)
-                        #print "TagData: ", d
-
-                        #if 'label' in d:
-                        if d.name == 'label':
-                            # print "Element:", d
-                            # print "d.contents: ", d.contents
-                            lastElementValue = self.GetLabelName(d.contents)
-                            #print "Label: ", lastElementValue
-
-                        # if d.name == 'label':
-                        #     lastElementValue = self.GetLabelName(d.contents)
-                        #     print "Label: ", lastElementValue
-                        # elif d.name == 'input':
-                        #     print "Input: ", d.contents
+    def GetTagInfo(self, tag):
+        tagName = tag.name
+        tagContent = tag.contents
+        tagAttr = tag.attrs
+        self.ProcessLastElement(tag)
 
 
 
-        return filterData
+
+        #if   ( tagName == 'label' ):
+             #self.GetLabelName(element)
+
+        # elif ( tagName == 'input' ):
+        #     self.Validate_input(element)
+        #
+        # elif ( tagName == 'a' ):
+        #     self.Validate_a(element)
+        #     lPrint = True
+        #
+        # elif (tagName == 'div'):
+        #     lPrint = False
+        #
+        # if lPrint:
+        #     print tagName, attr
+
+
+
+
     def SplitElementsfromString(self, elementList):
         SplittedElement = []
 
@@ -146,27 +183,6 @@ class ProcessContactUSPage:
                     SplittedElement.append(e)
 
         return SplittedElement
-
-    def ValidateElement(self, element):
-        element_name = element.name
-        attr = element.attrs
-        lPrint = True
-
-        # if   ( element_name == 'label' ):
-        #     self.GetLabelName(element)
-        #
-        # elif ( element_name == 'input' ):
-        #     self.Validate_input(element)
-        #
-        # elif ( element_name == 'a' ):
-        #     self.Validate_a(element)
-        #     lPrint = True
-        #
-        # elif (element_name == 'div'):
-        #     lPrint = False
-        #
-        # if lPrint:
-        #     print element_name, attr
 
 
     def GetLabelName(self, content):
@@ -210,29 +226,8 @@ class ProcessContactUSPage:
         a_id    = attr['id']
 
     def ExecuteURLS(self):
-        self.InsertQuery = """INSERT INTO home_page_links (link_text, links, home_url_id) VALUES (%s,%s, %s)"""
+        self.InsertQuery = """INSERT INTO form_elements (form, name, label, placeholder, element_id, type, value, content, status ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
         self.db = db.DB()
-        statement = """select id, url from urls where status = 'new' limit 1000"""
-        rows = self.db.executeSelectAll( statement )
-        nLen = len(rows)
-        nCtr = 0
-        for row in rows:
-            id  = row[0]
-            url = row[1]
-            url = str("http://" + url).strip()
-
-            try:
-                PageUrls = self.GetPageUrls(url, id)
-                nCtr += 1
-                print "Processing: " + str(nCtr) + "/" + str(nLen), url
-                self.SaveData(self.InsertQuery, PageUrls)
-                self.UpdateUrls(id, url)
-            except:
-                try:
-                    self.SaveSingleData(self.InsertQuery, PageUrls)
-                    self.UpdateUrls(id, url)
-                except:
-                    self.db = db.DB()
 
         self.db.close()
     def UpdateUrls(self, id, url):

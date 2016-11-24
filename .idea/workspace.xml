@@ -4,18 +4,7 @@
     <bookmark url="file://$PROJECT_DIR$/ImportStuff.py" line="1" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fffe8e67-3872-4d49-abea-9de898959a43" name="Default" comment="DB - Model Updated...&#10;">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/Engine31.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/GetPage.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/GetPageUrls.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/Import_WebList.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/OS_Utility.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Engine1.py" afterPath="$PROJECT_DIR$/Engine1.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Engine2.py" afterPath="$PROJECT_DIR$/Engine2.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Engine3.py" afterPath="$PROJECT_DIR$/Engine3.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db.py" afterPath="$PROJECT_DIR$/db.py" />
-    </list>
+    <list default="true" id="fffe8e67-3872-4d49-abea-9de898959a43" name="Default" comment="" />
     <ignored path="GISP.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -70,11 +59,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Utility.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Utility.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Utility.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="238">
-              <caret line="17" column="0" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
+            <state relative-caret-position="408">
+              <caret line="24" column="24" selection-start-line="24" selection-start-column="24" selection-end-line="24" selection-end-column="24" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -82,7 +71,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Engine3.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Engine3.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Engine3.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="153">
@@ -489,7 +478,14 @@
       <option name="project" value="LOCAL" />
       <updated>1479718386282</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Engine3 coding completed. amd arranged the file system of the project.&#10;">
+      <created>1479968283226</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1479968283226</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TodoView">
@@ -577,7 +573,8 @@
     <MESSAGE value="Engine 3 - Parsing changed to lxml and solved the problem of element identification." />
     <MESSAGE value="Engine 3 - Identified Element &amp; generated List for Saving.&#10;" />
     <MESSAGE value="DB - Model Updated...&#10;" />
-    <option name="LAST_COMMIT_MESSAGE" value="DB - Model Updated...&#10;" />
+    <MESSAGE value="Engine3 coding completed. amd arranged the file system of the project.&#10;" />
+    <option name="LAST_COMMIT_MESSAGE" value="Engine3 coding completed. amd arranged the file system of the project.&#10;" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -871,16 +868,6 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/GetPageUrls.py" />
     <entry file="file://$PROJECT_DIR$/GetPage.py" />
-    <entry file="file://$PROJECT_DIR$/Utility.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
-          <caret line="17" column="0" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/db.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="629">
@@ -907,6 +894,16 @@
           <caret line="9" column="15" selection-start-line="9" selection-start-column="15" selection-end-line="9" selection-end-column="15" />
           <folding>
             <element signature="e#0#14#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Utility.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="24" column="24" selection-start-line="24" selection-start-column="24" selection-end-line="24" selection-end-column="24" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>

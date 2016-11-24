@@ -1,4 +1,4 @@
-import GetPageUrls
+import Utility
 import time
 import db
 
@@ -78,8 +78,8 @@ class ProcessHomePage:
                     href_link = href[0]
                     href_text = href[1]
                     allLinks.append((href_text, href_link, id))
-                    contactUS_url = GetPageUrls.GetContactPageURL(href_text, href_link, url)
-                    if (contactUS_url <> None) and not (GetPageUrls.isURLExist(contactUS_url, contactURLS)):
+                    contactUS_url = Utility.GetContactPageURL(href_text, href_link, url)
+                    if (contactUS_url <> None) and not (Utility.isURLExist(contactUS_url, contactURLS)):
                         contactURLS.append((contactUS_url, id, 'New'))
                 if len(contactURLS) > 0:
                     query = """INSERT INTO contactus_url(url, url_id, status) VALUES (%s,%s, %s)"""
@@ -91,13 +91,13 @@ class ProcessHomePage:
 
     def GetPageLinks(self, url):
 
-        links = GetPageUrls.GetPageInfo(url, 'a')
+        links = Utility.GetPageInfo(url, 'a')
         hrefs = []
 
         for link in links:
             href = str(link.get('href')).strip()
 
-            if not GetPageUrls.isFirstCharacter(href, '#') and not GetPageUrls.isURLExist(href, hrefs) and not GetPageUrls.isJavaScript(href):
+            if not Utility.isFirstCharacter(href, '#') and not Utility.isURLExist(href, hrefs) and not Utility.isJavaScript(href):
                 hrefs.append((href, link.text.strip()))
         return hrefs
 

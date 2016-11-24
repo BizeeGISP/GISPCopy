@@ -1,6 +1,8 @@
 import Utility
 import time
 import db
+import logging
+import datetime
 
 
 class ProcessHomePage:
@@ -9,12 +11,19 @@ class ProcessHomePage:
     InsertQuery = ""
 
     def __init__(self):
+        now = datetime.datetime.now()
+        date = now.strftime("%Y-%m-%d")
+        #print date, type(date)
+        logging.basicConfig(filename='log\Engine2 ' + date + '.log',level=logging.DEBUG)
+        logging.info("Engine 2 Process Starts")
         startTime = time.time()
+
 
         self.ExecuteURLS()
 
-
-        print "Time consumed: ", time.time() - startTime
+        processSec = time.time() - startTime
+        logging.info("Time consumed: " + str( processSec ))
+        #print "Time consumed: ", time.time() - startTime
 
     def ExecuteURLS(self):
         self.InsertQuery = """INSERT INTO home_page_links (link_text, links, home_url_id) VALUES (%s,%s, %s)"""
@@ -31,7 +40,8 @@ class ProcessHomePage:
             try:
                 PageUrls = self.GetPageUrls(url, id)
                 nCtr += 1
-                print "Processing: " + str(nCtr) + "/" + str(nLen), url
+                logging.info("Processing: " + str(nCtr) + "/" + str(nLen), url)
+                #print "Processing: " + str(nCtr) + "/" + str(nLen), url
                 self.SaveData(self.InsertQuery, PageUrls)
                 self.UpdateUrls(id, url)
             except:
@@ -49,8 +59,10 @@ class ProcessHomePage:
             self.db.execute(self.updateQuery)
             self.db.commit()
         except Exception, e:
-            print self.updateQuery
-            print  e, "Updating Error: ", url + " | " + idStr
+            logging.debug("Error while updating: " + self.updateQuery)
+            logging.warning(e)
+            # print self.updateQuery
+            # print  e, "Updating Error: ", url + " | " + idStr
     def SaveSingleData(self, query, values):
         nCtr = 0
         nLen = len(values)

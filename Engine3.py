@@ -2,6 +2,7 @@ import Utility
 import time
 import db
 import requests
+import logging
 from bs4 import BeautifulSoup
 
 class ProcessContactUSPage:
@@ -51,6 +52,29 @@ class ProcessContactUSPage:
         con = self.dbConnection()
         con.executemany(query, values)
 
+    def UpdateUrls(self):
+        idStr = str(self.url_id)
+        try:
+            self.updateQuery = "update contactus_url set status = 'Processed' where id = " + idStr
+            self.db.execute(self.updateQuery)
+        except Exception, e:
+            logging.debug("Error while updating: " + self.updateQuery)
+            logging.warning(e)
+            # print self.updateQuery
+            # print  e, "Updating Error: ", url + " | " + idStr
+
+    def SaveSingleData(self, query, values):
+        nCtr = 0
+        nLen = len(values)
+        for data in values:
+            try:
+                nCtr += 1
+                if (nCtr % 50) == 0:
+                    print "Data Processing: ", str(nCtr) + "/" + str(nLen)
+                self.db.execute(query, data)
+            except Exception, e:
+                print e, "Internal loop Exception"
+
     def closeDB(self):
         if self.dbConnect <> None and self.dbConnect:
             self.dbConnect.close()
@@ -76,15 +100,26 @@ class ProcessContactUSPage:
 
     def ProcessPage(self, url = ''):
         #url = "http://www.vidzpros.com/contact.html"
+        success = False
         self.GetURLString(url)
 
         processData = self.ProcessForms(self.GetForms())
-        #print processData
         if len(processData) > 0:
 
-            #Utility.printList(processData)
-            self.SaveData(self.InsertQuery, processData)
-            self.db.commit()
+            try:
+                self.SaveData(self.InsertQuery, processData)
+                success = True
+            except Exception, e:
+                logging.exception(e)
+                try:
+                    self.SaveSingleData(self.InsertQuery, processData)
+                    success = True
+                except Exception, e:
+                    logging.exception(e)
+            finally:
+                if success:
+                    self.UpdateUrls()
+                    self.db.commit()
 
     def ProcessForms(self, forms):
         nform = 0

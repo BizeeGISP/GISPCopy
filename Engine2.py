@@ -4,6 +4,9 @@ import db
 import logging
 import datetime
 
+import sys
+reload(sys)
+sys.setdefaultencoding('UTF8')
 
 class ProcessHomePage:
     db = None
@@ -11,24 +14,30 @@ class ProcessHomePage:
     InsertQuery = ""
 
     def __init__(self):
+
         now = datetime.datetime.now()
-        date = now.strftime("%Y-%m-%d")
+        date = now.strftime(" %Y-%m-%d ")
+
         #print date, type(date)
-        logging.basicConfig(filename='log\Engine2 ' + date + '.log',level=logging.DEBUG)
-        logging.info("Engine 2 Process Starts")
+        Format = '%(asctime)s - %(levelname)s - %(message)s'
+        LOG_FILENAME = 'log\Engine2' + date + '.log'
+
+        logging.basicConfig(filename=LOG_FILENAME, format=Format,level=logging.DEBUG)
+
+        logging.info("ENGINE 2 PROCESS STARTS")
         startTime = time.time()
 
-
+        #self.ExcludeUrl()
         self.ExecuteURLS()
-
         processSec = time.time() - startTime
+
         logging.info("Time consumed: " + str( processSec ))
         #print "Time consumed: ", time.time() - startTime
 
     def ExecuteURLS(self):
         self.InsertQuery = """INSERT INTO home_page_links (link_text, links, home_url_id) VALUES (%s,%s, %s)"""
         self.db = db.DB()
-        statement = """select id, url from urls where status = 'new' and id > 3500 limit 100"""
+        statement = """select id, url from urls where status = 'new' and id > 10000 limit 2"""
         rows = self.db.executeSelectAll(statement)
         nLen = len(rows)
         nCtr = 0
@@ -40,7 +49,7 @@ class ProcessHomePage:
             try:
                 PageUrls = self.GetPageUrls(url, id)
                 nCtr += 1
-                logging.info("Processing: " + str(nCtr) + "/" + str(nLen), url)
+                logging.info("Processing: " + str(nCtr) + "/" + str(nLen))
                 #print "Processing: " + str(nCtr) + "/" + str(nLen), url
                 self.SaveData(self.InsertQuery, PageUrls)
                 self.UpdateUrls(id, url)
@@ -50,8 +59,10 @@ class ProcessHomePage:
                     self.UpdateUrls(id, url)
                 except:
                     self.db = db.DB()
-
         self.db.close()
+
+
+
     def UpdateUrls(self, id, url):
         idStr = str(id)
         try:
@@ -59,10 +70,16 @@ class ProcessHomePage:
             self.db.execute(self.updateQuery)
             self.db.commit()
         except Exception, e:
-            logging.debug("Error while updating: " + self.updateQuery)
+            #now = datetime.datetime.now()
+            #date = now.strftime("%Y-%m-%d")
+            #Format = '%(asctime)s - %(levelname)s - %(message)s'
+            #LOG_FILENAME1 = 'log\Engine2Debug' + date + '.log'
+            #logging.basicConfig(filename=LOG_FILENAME1, format=Format, level=logging.INFO)
+            logging.debug("Error while updating: " + self.updateQuery+ "|" +url)
             logging.warning(e)
-            # print self.updateQuery
-            # print  e, "Updating Error: ", url + " | " + idStr
+             #print self.updateQuery
+             #print  e, "Updating Error: ", url + " | " + idStr
+
     def SaveSingleData(self, query, values):
         nCtr = 0
         nLen = len(values)
@@ -70,11 +87,16 @@ class ProcessHomePage:
             try:
                 nCtr+=1
                 if (nCtr % 50) == 0:
-                    print "Data Processing: ", str(nCtr) + "/" + str(nLen)
+                    logging.info(" Data Processing: " + str(nCtr)+ "/" + str(nLen))
+                    #print "Data Processing: ", str(nCtr) + "/" + str(nLen)
                 self.db.execute(query, data)
                 self.db.commit()
             except Exception, e:
-                print e, "Internal loop Exception"
+
+                logging.debug("Internal loop Exception")
+                logging.warning(e)
+
+                #print e, "Internal loop Exception"
 
     def SaveData(self, query, values):
         self.db.executemany(query, values)
@@ -112,6 +134,11 @@ class ProcessHomePage:
             if not Utility.isFirstCharacter(href, '#') and not Utility.isURLExist(href, hrefs) and not Utility.isJavaScript(href):
                 hrefs.append((href, link.text.strip()))
         return hrefs
+
+
+    def GetTopLevelDomain(self, url):
+        return url[url.find(".") + 1:].rstrip("/")
+
 
 ProcessHomePage()
 

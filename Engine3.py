@@ -1,9 +1,19 @@
 import Utility
+# coding=<utf8>
+
+#!/usr/local/bin/python
+import sys
+
 import time
 import db
 import requests
 import logging
+import datetime
 from bs4 import BeautifulSoup
+
+reload(sys)
+sys.setdefaultencoding('UTF8')
+
 
 class ProcessContactUSPage:
     db = None
@@ -22,21 +32,38 @@ class ProcessContactUSPage:
     InputElement = [ "input", "textarea" ]
     LastElement  = ""
     LabelName    = ""
-    url_id       = 0
+    url_id       = 28
     element_lookup = []
 
     def __init__(self):
+        now = datetime.datetime.now()
+        date = now.strftime(" %Y-%m-%d ")
+
+        # print date, type(date)
+        Format = '%(asctime)s - %(levelname)s - %(message)s'
+        LOG_FILENAME = 'log\Engine3' + date + '.log'
+
+        logging.basicConfig(filename=LOG_FILENAME, format=Format, level=logging.DEBUG)
+
+        logging.info("ENGINE 3 PROCESS STARTS")
         startTime = time.time()
         self.InsertQuery = """INSERT INTO form_elements ( cont_url_id, form, tag_name, tag_id, label_id, name_id, placeholder_id, content_id, type, value, element_id, status ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
                                                 #[0, element.name, input_label, input_name, input_placeholder, input_id, input_type, input_value, content, 'New']
-        #self.ProcessPage()
-        self.ProcessPagesFromDB()
+        self.ProcessPage("http://www.vidzpros.com/contact.html")
+        #self.ProcessPagesFromDB()
+        processSec = time.time() - startTime
 
-        print "Time consumed: ", time.time() - startTime
+        logging.info("Time consumed: " + str(processSec))
+        #print "Time consumed: ", time.time() - startTime
 
     def GetURLString(self, url):
-        r = requests.get(url)
-        self.soup = BeautifulSoup( r.content, 'lxml' )
+        try:
+            r = requests.get(url)
+            self.soup = BeautifulSoup( r.content, 'lxml' )
+        except Exception, e:
+            print e
+            logging.warning(e)
+
 
     def dbConnection(self, lConnector = False):
         if lConnector:
@@ -70,10 +97,13 @@ class ProcessContactUSPage:
             try:
                 nCtr += 1
                 if (nCtr % 50) == 0:
-                    print "Data Processing: ", str(nCtr) + "/" + str(nLen)
+                    logging.info("Data Processing")
+                    #print "Data Processing: ", str(nCtr) + "/" + str(nLen)
                 self.db.execute(query, data)
             except Exception, e:
-                print e, "Internal loop Exception"
+                logging.debug("Internal loop Exception")
+                logging.warning(e)
+                #print e, "Internal loop Exception"
 
     def closeDB(self):
         if self.dbConnect <> None and self.dbConnect:
@@ -84,7 +114,7 @@ class ProcessContactUSPage:
 
     def ProcessPagesFromDB(self):
         self.dbConnection()
-        statement = """select id, url from contactus_url where status = 'New' limit 10"""
+        statement = """select id, url from contactus_url where status = 'New' limit 26"""
         rows = self.db.executeSelectAll(statement)
         nLen = len(rows)
 
@@ -92,6 +122,7 @@ class ProcessContactUSPage:
             self.url_id  = row[0]
             url = row[1]
             url = url.strip()
+            print url
             # url = "http://bizee.in/contacts.php"
             # url = "http://www.vidzpros.com/contact.html"
             self.ProcessPage(url)
@@ -99,6 +130,7 @@ class ProcessContactUSPage:
         self.closeDB()
 
     def ProcessPage(self, url = ''):
+        #url = "http://ocsnext.ebay.com/ocs/cuhome"
         #url = "http://www.vidzpros.com/contact.html"
         success = False
         self.GetURLString(url)
@@ -116,14 +148,17 @@ class ProcessContactUSPage:
                     success = True
                 except Exception, e:
                     logging.exception(e)
+
             finally:
                 if success:
                     self.UpdateUrls()
                     self.db.commit()
 
     def ProcessForms(self, forms):
+        pdata = 0
         nform = 0
         processData = []
+
         for form in forms:
             nform +=1
             formElement = form.find_all()
@@ -138,8 +173,11 @@ class ProcessContactUSPage:
                     data[1] = nform
                     #print "Data -->", data
                     processData.append(data)
-            #print "ProcessData ---> " + str(len(processData)), processData
+                    pdata = len(processData)
+            logging.info("ProcessData ---> " + str(pdata)+"|" +str(processData))
+            print "ProcessData ---> " + str(len(processData)), processData
         return processData
+
     def ProcessElement(self,element):
         DataValues = []
         if ( element.name in self.InputElement ) or ( element.name == 'button' ):
@@ -150,6 +188,7 @@ class ProcessContactUSPage:
         #Should be executed always after processing element
         self.RecordLastElement(element)
         return DataValues
+
     def GetInputProperties(self, element):
         self.element_lookup = []
 
@@ -177,15 +216,19 @@ class ProcessContactUSPage:
         return resultId
 
     def GetIds(self, key, value):
-        resultId = None
-        if value <> None:
-            resultId = 0
+       try:
+          resultId = None
+          if value <> None:
+            resultId = None
             args = self.Get_argsId(key, value)
-            if len(args) > 0:
+            if (args > 0):
                 resultId = args[1]
                 self.element_lookup.append(args[2])
-
-        return resultId
+          return resultId
+       except Exception, e:
+          logging.debug("error while getting ID")
+          logging.warning(e)
+          #print e,"error while getting ID"
 
     def GetDictKeyValue(self, dictAttr, key):
         keys = dictAttr.keys()
@@ -193,6 +236,7 @@ class ProcessContactUSPage:
         if key in keys:
             value = dictAttr[key].strip()
         return value
+
     def RecordLastElement(self, element):
         if ('span' == element.name ) or ( 'div' == element.name ):
             #print "Escaping: " + self.LastElement, self.LabelName
@@ -212,6 +256,7 @@ class ProcessContactUSPage:
             LabelName = self.LabelName
             #print LabelName
         return LabelName
+
     def GetElementContentName(self, element):
         try:
             content = element.contents
@@ -223,7 +268,14 @@ class ProcessContactUSPage:
             if labelName == "":
                 labelName = None
         except Exception, e:
-            print e, "Error while building tag content"
+            print "connection", e
+            try:
+                print "Decoding  ", e
+                time.sleep(2)
+                logging.warning(str(e),"Error while building tag content")
+            except Exception, e:
+                print "logging error",e
+            #print e, "Error while building tag content"
 
         return labelName
 
@@ -254,9 +306,9 @@ class ProcessContactUSPage:
             con = self.dbConnection(True)
             results_args = con.callproc(procedure, [value, 0, 0 ] )
             self.dbConnect.commit()
-
             #print "Result: ", results_args
         return results_args
+
 
 
 

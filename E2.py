@@ -7,7 +7,7 @@ import datetime
 import requests
 import time
 from bs4 import BeautifulSoup
-from urlparse import urlparse
+from urllib.parse import urlparse
 import E2_Form
 import E2_Regions
 import sys

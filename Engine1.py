@@ -1,5 +1,4 @@
 import openpyxl
-import dbUtilities
 import csv
 import time
 import logging
@@ -15,7 +14,7 @@ class ImportUrls:
     writer = None
     connection = None
     million = 0
-    #connection = dbUtilities.getConnection()
+
 
     def __init__(self):
         #tempDir = Utility.CheckAndCreateDirectory(Utility.getWorkingDirectory() + "\temp")
@@ -58,13 +57,11 @@ class ImportUrls:
             while row <= rowmax:
 
                 url = sheetdata['A' + str(row)].value
-                if (url <> None):
+                if (url != None):
                     # print top_level_domain
                     data = (url, self.GetTopLevelDomain(url), 'New')
 
                     # print data
-                    # dbUtilities.executeInsert(cur, query, data)
-                    # dbUtilities.commit()
                     values.append(data)
                 row += 1
         return values
@@ -76,7 +73,7 @@ class ImportUrls:
             values = []
             for row in reader:
                 url = row[0]
-                if (url <> None):
+                if (url != None):
                     if ( counter % 10000) == 0:
                         logging.info("counter-->" +str(counter))
                         #print counter

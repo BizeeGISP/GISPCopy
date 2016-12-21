@@ -1,12 +1,13 @@
+# -*- encoding: utf-8 -*-
 import Utility
 import time
 import db
 import logging
 import datetime
-
+from urlparse import urlparse
 import sys
-reload(sys)
-sys.setdefaultencoding('UTF8')
+# reload(sys)
+# sys.setdefaultencoding('UTF8')
 
 class ProcessHomePage:
     db = None
@@ -27,7 +28,7 @@ class ProcessHomePage:
         logging.info("ENGINE 2 PROCESS STARTS")
         startTime = time.time()
 
-        #self.ExcludeUrl()
+
         self.ExecuteURLS()
         processSec = time.time() - startTime
 
@@ -37,7 +38,7 @@ class ProcessHomePage:
     def ExecuteURLS(self):
         self.InsertQuery = """INSERT INTO home_page_links (link_text, links, home_url_id) VALUES (%s,%s, %s)"""
         self.db = db.DB()
-        statement = """select id, url from urls where status = 'new' and id > 10000 limit 2"""
+        statement = """select id, url from urls where status = 'new' and id > 0 limit 10"""
         rows = self.db.executeSelectAll(statement)
         nLen = len(rows)
         nCtr = 0
@@ -69,12 +70,8 @@ class ProcessHomePage:
             self.updateQuery = "update urls set status = 'Processed' where id = " + idStr
             self.db.execute(self.updateQuery)
             self.db.commit()
-        except Exception, e:
-            #now = datetime.datetime.now()
-            #date = now.strftime("%Y-%m-%d")
-            #Format = '%(asctime)s - %(levelname)s - %(message)s'
-            #LOG_FILENAME1 = 'log\Engine2Debug' + date + '.log'
-            #logging.basicConfig(filename=LOG_FILENAME1, format=Format, level=logging.INFO)
+        except Exception as e:
+
             logging.debug("Error while updating: " + self.updateQuery+ "|" +url)
             logging.warning(e)
              #print self.updateQuery
@@ -91,7 +88,7 @@ class ProcessHomePage:
                     #print "Data Processing: ", str(nCtr) + "/" + str(nLen)
                 self.db.execute(query, data)
                 self.db.commit()
-            except Exception, e:
+            except Exception as e:
 
                 logging.debug("Internal loop Exception")
                 logging.warning(e)
@@ -111,16 +108,17 @@ class ProcessHomePage:
                 for href in hrefList:
                     href_link = href[0]
                     href_text = href[1]
-                    allLinks.append((href_text, href_link, id))
-                    contactUS_url = Utility.GetContactPageURL(href_text, href_link, url)
-                    if (contactUS_url <> None) and not (Utility.isURLExist(contactUS_url, contactURLS)):
-                        contactURLS.append((contactUS_url, id, 'New'))
-                if len(contactURLS) > 0:
-                    query = """INSERT INTO contactus_url(url, url_id, status) VALUES (%s,%s, %s)"""
-                    self.SaveData(query, contactURLS)
-        except Exception, e:
-            print e
-
+                    if not href_link in self.GetDomain(url):
+                        allLinks.append((href_text, href_link, id))
+                        contactUS_url = Utility.GetContactPageURL(href_text, href_link, url)
+                        if (contactUS_url != None) and not (Utility.isURLExist(contactUS_url, contactURLS)):
+                            contactURLS.append((contactUS_url, id, 'New'))
+                    if len(contactURLS) > 0:
+                        query = """INSERT INTO contactus_url(url, url_id, status) VALUES (%s,%s, %s)"""
+                        self.SaveData(query, contactURLS)
+        except Exception as e:
+            print(e)
+        print(allLinks)
         return allLinks
 
     def GetPageLinks(self, url):
@@ -136,8 +134,12 @@ class ProcessHomePage:
         return hrefs
 
 
-    def GetTopLevelDomain(self, url):
-        return url[url.find(".") + 1:].rstrip("/")
+    def GetDomain(self, url):
+        parsed_uri = urlparse(url)
+        domain = '{uri.netloc}'.format(uri=parsed_uri)
+        print(domain)
+        return domain
+
 
 
 ProcessHomePage()

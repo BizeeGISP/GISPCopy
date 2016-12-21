@@ -12,9 +12,7 @@ from bs4 import BeautifulSoup
 # sys.setdefaultencoding('UTF8')
 
 
-class ProcessContactUSPage:
-    db = None
-    dbConnect = None
+class WebForm:
     soup = None
     updateQuery = ""
     InsertQuery = ""
@@ -32,9 +30,11 @@ class ProcessContactUSPage:
     url_id       = 0
     element_lookup = []
 
-    def __init__(self):
+    def __init__(self, soup):
         now = datetime.datetime.now()
         date = now.strftime(" %Y-%m-%d ")
+
+        self.soup = soup
 
         # print date, type(date)
         Format = '%(asctime)s - %(levelname)s - %(message)s'
@@ -44,114 +44,18 @@ class ProcessContactUSPage:
 
         logging.info("ENGINE 3 PROCESS STARTS")
         startTime = time.time()
-        self.InsertQuery = """INSERT INTO form_elements ( cont_url_id, form, tag_name, tag_id, label_id, name_id, placeholder_id, content_id, type, value, element_id, status ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
-                                                #[0, element.name, input_label, input_name, input_placeholder, input_id, input_type, input_value, content, 'New']
-        #self.ProcessPage("http://www.vidzpros.com/contact.html")
-        self.ProcessPagesFromDB()
+
+        formData = self.ProcessPage()
         processSec = time.time() - startTime
 
         logging.info("Time consumed: " + str(processSec))
         #print "Time consumed: ", time.time() - startTime
 
-    def GetURLString(self, url):
-        try:
-            r = requests.get(url)
-            self.soup = BeautifulSoup( r.content, 'lxml' )
-        except Exception as e:
-            print (e)
-            logging.warning(e)
+        return formData
 
 
-    def dbConnection(self, lConnector = False):
-        if lConnector:
-            if self.dbConnect == None and not self.dbConnect:
-                self.dbConnect = db.DBConnector()
-            return self.dbConnect
-        else:
-            if self.db == None and not self.db:
-                self.db = db.DB()
-            return self.db
-
-    def SaveData(self, query, values):
-        con = self.dbConnection()
-        con.executemany(query, values)
-
-    def UpdateUrls(self):
-        idStr = str(self.url_id)
-        try:
-            self.updateQuery = "update contactus_url set status = 'Processed' where id = " + idStr
-            self.db.execute(self.updateQuery)
-        except Exception as e:
-            logging.debug("Error while updating: " + self.updateQuery)
-            logging.warning(e)
-            # print self.updateQuery
-            # print  e, "Updating Error: ", url + " | " + idStr
-
-    def SaveSingleData(self, query, values):
-        nCtr = 0
-        nLen = len(values)
-        for data in values:
-            try:
-                nCtr += 1
-                if (nCtr % 50) == 0:
-                    logging.info("Data Processing")
-                    #print "Data Processing: ", str(nCtr) + "/" + str(nLen)
-                self.db.execute(query, data)
-            except Exception as e:
-                logging.debug("Internal loop Exception")
-                logging.warning(e)
-                #print e, "Internal loop Exception"
-
-    def closeDB(self):
-        if self.dbConnect != None and self.dbConnect:
-            self.dbConnect.close()
-
-        if self.db != None and self.db:
-            self.db.close()
-
-    def ProcessPagesFromDB(self):
-        self.dbConnection()
-        statement = """select id, url from contactus_url where status = 'New' limit 26"""
-        rows = self.db.executeSelectAll(statement)
-        nLen = len(rows)
-
-        for row in rows:
-            self.url_id  = row[0]
-            url = row[1]
-            url = url.strip()
-            print(url)
-            # url = "http://bizee.in/contacts.php"
-            # url = "http://www.vidzpros.com/contact.html"
-            self.ProcessPage(url)
-
-        self.closeDB()
-
-    def ProcessPage(self, url = ''):
-        #url = "http://ocsnext.ebay.com/ocs/cuhome"
-        #url = "http://www.vidzpros.com/contact.html"
-        success = False
-        self.GetURLString(url)
-
-        processData = self.ProcessForms(self.GetForms())
-        if len(processData) > 0:
-
-            try:
-                self.SaveData(self.InsertQuery, processData)
-                success = True
-            except Exception as e:
-                logging.exception(e)
-                try:
-                    self.SaveSingleData(self.InsertQuery, processData)
-                    success = True
-                except Exception as e:
-                    logging.exception(e)
-
-            finally:
-                if success:
-                    self.UpdateUrls()
-                    self.db.commit()
-
-    def ProcessForms(self, forms):
+    def ProcessPage(self):
+        forms = self.soup.find_all('form')
         pdata = 0
         nform = 0
         processData = []
@@ -276,8 +180,6 @@ class ProcessContactUSPage:
 
         return labelName
 
-    def GetForms(self):
-        return self.soup.find_all('form')
 
     def GetTagInfo(self, tag):
         tagName = tag.name
@@ -362,5 +264,5 @@ class ProcessContactUSPage:
 
 
 
-ProcessContactUSPage()
+WebForm()
 

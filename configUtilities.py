@@ -1,5 +1,5 @@
-import ConfigParser
-config = ConfigParser.RawConfigParser()
+import configparser
+config = configparser.RawConfigParser()
 config.read('ConfigFile.properties')
 
 

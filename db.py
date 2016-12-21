@@ -17,7 +17,7 @@ class DB:
         try:
             self.con = MySQLdb.connect( host=self.db_server,user=self.db_uid, passwd=self.db_pwd,  db=self.db_name, charset='utf8')
             #self.con.autocommit = False
-        except (AttributeError, MySQLdb.OperationalError), e:
+        except (AttributeError, MySQLdb.OperationalError) as e:
             raise e
 
     def executemany(self, statement, values):
@@ -39,7 +39,7 @@ class DB:
                 self.con.close()
                 #print '...Closed Database Connection: ' + str(self.con)
             else:
-                print '...No Database Connection to Close.'
+                print( '...No Database Connection to Close.')
         except (AttributeError, MySQLdb.OperationalError) as e:
             raise e
 
@@ -74,7 +74,7 @@ class DBConnector:
                                           host=db_server,
                                           database=db_name)"""
             self.con = mysql.connector.connect(user=self.db_uid, password=self.db_pwd, host=self.db_server,  database=self.db_name, charset='utf8')
-        except (AttributeError, mysql.connector.OperationalError), e:
+        except (AttributeError, mysql.connector.OperationalError) as e:
             raise e
 
     def commit(self):
@@ -90,7 +90,7 @@ class DBConnector:
                 result_args = cursor.callproc(procedure, args)
                 #print "End: " + procedure, args
         except Exception as e:
-            print e
+            print(e)
         # finally:
         #     cursor.close()
         return result_args
@@ -102,6 +102,6 @@ class DBConnector:
                 self.con.close()
                 #print '...Closed Database Connection: ' + str(self.con)
             else:
-                print '...No Database Connection to Close.'
+                print('...No Database Connection to Close.')
         except (AttributeError, MySQLdb.OperationalError) as e:
             raise e

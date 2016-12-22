@@ -15,6 +15,7 @@ import sys
 # sys.setdefaultencoding('UTF8')
 
 class ProcessPage:
+
     db = None
     updateQuery = ""
     InsertQuery = ""

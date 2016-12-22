@@ -18,5 +18,6 @@ def ContactUsPage(soup):
                     if not country in data:
                         data.append(country)
     print( "Result: ", data)
+
     return data
 

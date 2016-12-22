@@ -1,7 +1,9 @@
+# -*- encoding: utf-8 -*-
 import os
 import requests
 import time
 from bs4 import BeautifulSoup
+
 
 def getWorkingDirectory():
     return os.getcwd()
@@ -13,17 +15,18 @@ def CheckAndCreateDirectory(directory):
 
 def printList(list):
     for item in list:
-        print item
+        print( item)
 
 
 
 def GetPageInfo(url, type):
+    data = []
     try:
         r = requests.get(url)
-        soup = BeautifulSoup(r.content, "html.parser")
+        soup = BeautifulSoup(r.content, "lxml")
         data = soup.find_all(type)
-    except Exception, e:
-        print e, "Connection Exception : " + url
+    except Exception as e:
+        print( e, "Connection Exception : " + url)
 
     return data
 
@@ -35,6 +38,7 @@ def isJavaScript(str):
     return str.find('javascript', 0, len(str)) > -1
 
 def getBaseURL(baseURL, href):
+    url = None
     if "http" in href:
         url = href
     else:
@@ -57,7 +61,7 @@ def findContactPageURL(lLinks, baseURL):
         try:
             url = GetContactPageURL(link_text, link_href, baseURL)
         except:
-            print url, "no contact page"
+            print( url, "no contact page")
 
     return url
 
@@ -69,3 +73,4 @@ def isURLExist(str, lists, position=0):
             lReturn = True
 
     return lReturn
+

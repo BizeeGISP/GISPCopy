@@ -10,13 +10,14 @@ def ContactUsPage(soup):
         if not string == '\n' and string != "":
             # print string
             dat += string
-            print( "Data:", dat)
+            print("Data:", dat)
             if dat != "":
                 places = geograpy.get_place_context(text=dat)
                 country = places.country_cities
                 if len(country) > 0:
                     if not country in data:
                         data.append(country)
-    print ("Result: ", data)
+    print( "Result: ", data)
+
     return data
 

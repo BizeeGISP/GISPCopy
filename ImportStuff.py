@@ -1,5 +1,5 @@
 import pip
-pip.main(['install', 'pymongo'])
+pip.main(['install', 'pika'])
 #libxml2 and libxslt
 
 #pip install wheel

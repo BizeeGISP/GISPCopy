@@ -49,8 +49,19 @@ class MdbClient:
                 Direct = pymongo.DESCENDING
 
             data = [r for r in self.collection.find(condition).sort(sort_Key_Or_List, Direct)]
+
+                # if returnDataType == list:
+            #     data = [r for r in self.collection.find(condition).sort(sort_Key_Or_List, Direct)]
+            # else:
+            #     data = {r for r in self.collection.find(condition).sort(sort_Key_Or_List, Direct)}
+
         else:
             data = [r for r in self.collection.find(condition)]
+
+            # if returnDataType == list:
+            #     data = [r for r in self.collection.find(condition)]
+            # else:
+            #     data = {r for r in self.collection.find(condition)}
         return data
 
     #### Library Based Methods ------ STARTS HERE -------  Refer the Pymongo Library for the properties, methods and functionality of the function.

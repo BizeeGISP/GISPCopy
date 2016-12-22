@@ -4,16 +4,16 @@ import Utility
 
 
 mdb = MDB.MdbClient("GISP")
-mdb.Collection("urls")
+mdb.Collection("D_URLs")
 
 #print(mdb.count({"Status": ""}))
 
-returnList = mdb.find_data({ "Status": "New"}, "URL", False)
-Utility.printList(returnList)
+# returnList = mdb.find_data({ "Status": "New"}, "URL", False)
+# Utility.printList(returnList)
 #print(mdb.find_one_by_ObjectId("585a5b2c816fb945843cc088"))
 
 
-#
+mdb.delete()
 # data = [{ "URL":"google.fr", "Status":"New", "URL_TYPE":"D"}, { "URL":"google.cd", "Status":"New", "URL_TYPE":"D"}]
 # returnValue = mdb.InsertMany(data)
 #Utility.printList(returnValue)

@@ -3,10 +3,9 @@ import csv
 import time
 import logging
 import datetime
-import Utility
-import os
-import db
-import types
+import MDB
+
+
 
 
 class ImportUrls:
@@ -18,33 +17,33 @@ class ImportUrls:
 
     def __init__(self):
         #tempDir = Utility.CheckAndCreateDirectory(Utility.getWorkingDirectory() + "\temp")
+        startTicks = time.time()
 
         now = datetime.datetime.now()
         date = now.strftime("%Y-%m-%d")
 
-        logging.basicConfig(filename='log\Engine1 ' + date + '.log', format='%(asctime)s - %(levelname)s - %(message)s',
+        logging.basicConfig(filename='Engine1 ' + date + '.log', format='%(asctime)s - %(levelname)s - %(message)s',
                             level=logging.DEBUG)
         logging.info("ENGINE 1 PROCESS STARTS")
 
-        filename = "tmpdata.csv"
-        startTicks = time.time()
+
         lExcel = False
         if lExcel:
             self.ImportFromExcel()
         else:
-            #SecurePath = "C:\ProgramData\MySQL\MySQL Server 5.7\Uploads"
-            #self.writecsv(filename, self.ImportFromCSV())
+           #Securepath= "C:\ProgramData\MySQL\MySQL Server 5.7\Uploads"
+            # self.writecsv(filename, self.ImportFromCSV())
             data = self.ImportFromCSV()
-            #if len(data) >0:
-                #self.dbSave(data)
+            # if len(data) >0:
+            #self.dbSave()
 
-            #basefilename = os.path.join(os.getcwd(), filename)
-            #self.dbSaveFromFile(basefilename)
+            # basefilename = os.path.join(os.getcwd(), filename)
+            # self.dbSaveFromFile(basefilename)
 
         datagenSec = time.time() - startTicks
 
         logging.info("Data generation consumed Time: " + str(datagenSec))
-        #print time.time() - startTicks, " Data generation Time consumed "
+        print( time.time() - startTicks, " Data generation Time consumed ")
 
     def ImportFromExcel(self):
         values = []
@@ -67,59 +66,41 @@ class ImportUrls:
         return values
 
     def ImportFromCSV(self):
-        with open('in.csv', 'rb') as f:
+        with open('in.csv', 'r') as f:
             reader = csv.reader(f)
             counter = 0
             values = []
             for row in reader:
+
                 url = row[0]
                 if (url != None):
-                    if ( counter % 10000) == 0:
-                        logging.info("counter-->" +str(counter))
-                        #print counter
-
                     counter += 1
-                    data = (url, self.GetTopLevelDomain(url), 'New')
+                    data = {"url": url,"tld": self.GetTopLevelDomain(url),"eps":0}
                     values.append(data)
-                    if ( counter == 10000):
+                    if ( counter == 100000):
                         self.dbSave(values)
-                        #counter = 0
+                        counter = 0
                         values = []
+            if counter > 0:
+                self.dbSave(values)
         return values
-
-    def dbSaveFromFile(self, filename):
-        Query = " LOAD DATA INFILE '"  + filename + "' INTO TABLE urls FIELDS TERMINATED BY ','  "
-        self.db = db.DB()
-        self.db.execute(Query)
-        self.db.commit()
-        self.db.close()
 
 
     def dbSave(self, values=None):
         val=len(values)
-        logging.info("Processing: " + str(val))
+        self.million += val
+        logging.info("Saving: " + str(val))
 
-        #print " Processing : ", len(values)
+        print("Saving : ", val)
 
-        self.million += 1
         startTime = time.time()
-        self.db = db.DB()
-        self.db.executemany("INSERT INTO urls(url, top_level_domain, status) VALUES (%s, %s, %s)", values)
-        self.db.commit()
-        self.db.close()
+        mdb = MDB.MdbClient("GISP")
+        mdb.Collection("H_URLs")
+        mdb.insert_many(values)
+        mdb.close()
         timeconsSec = time.time() - startTime
         logging.info( " Time consumed " + str(timeconsSec) + "to save" + str(self.million)  + " Million")
-        #print time.time() - startTime, " Time consumed to save " + str(self.million) + " Million"
-        logging.info("delaying for 10 sec.")
-        #print "delaying for 10 sec."
-        time.sleep(10)
-        logging.info("delaying for 10 sec.")
-        #print "delayed for 10 sec."
-
-    def writecsv(self, filename, datalist):
-        with open(filename, 'wb') as f:
-            writer = csv.writer(f)
-            writer.writerows(datalist)
+        print( timeconsSec, " Time consumed to save " + str(self.million) + " Thousand" )
 
     def GetTopLevelDomain(self, url):
         return url[url.find(".") + 1:].rstrip("/")

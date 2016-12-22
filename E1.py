@@ -4,7 +4,8 @@ import time
 import logging
 import datetime
 import MDB
-
+import configUtilities
+from os import listdir
 
 
 
@@ -13,7 +14,7 @@ class ImportUrls:
     writer = None
     connection = None
     million = 0
-
+    CSV_PATH = configUtilities.getProperties('E1-CSV', 'PATH')
 
     def __init__(self):
         #tempDir = Utility.CheckAndCreateDirectory(Utility.getWorkingDirectory() + "\temp")
@@ -22,7 +23,7 @@ class ImportUrls:
         now = datetime.datetime.now()
         date = now.strftime("%Y-%m-%d")
 
-        logging.basicConfig(filename='Engine1 ' + date + '.log', format='%(asctime)s - %(levelname)s - %(message)s',
+        logging.basicConfig(filename='log\E1 ' + date + '.log', format='%(asctime)s - %(levelname)s - %(message)s',
                             level=logging.DEBUG)
         logging.info("ENGINE 1 PROCESS STARTS")
 
@@ -65,24 +66,35 @@ class ImportUrls:
                 row += 1
         return values
 
-    def ImportFromCSV(self):
-        with open('in.csv', 'r') as f:
-            reader = csv.reader(f)
-            counter = 0
-            values = []
-            for row in reader:
+    def find_csv_filenames(self,path_to_dir, suffix=".csv"):
+        filenames = listdir(path_to_dir)
+        return [filename for filename in filenames if filename.endswith(suffix)]
 
-                url = row[0]
-                if (url != None):
-                    counter += 1
-                    data = {"url": url,"tld": self.GetTopLevelDomain(url),"eps":0}
-                    values.append(data)
-                    if ( counter == 100000):
-                        self.dbSave(values)
-                        counter = 0
-                        values = []
-            if counter > 0:
-                self.dbSave(values)
+
+    def ImportFromCSV(self):
+
+        filenames = self.find_csv_filenames(self.CSV_PATH)
+        print(filenames)
+        for name in filenames:
+            print("FileName", self.CSV_PATH + name)
+            with open(self.CSV_PATH + name, 'r') as f:
+                reader = csv.reader(f)
+                counter = 0
+                values = []
+                for row in reader:
+
+                    url = row[0]
+                    if (url != None):
+                        counter += 1
+                        data = {"url": url,"tld": self.GetTopLevelDomain(url),"eps":0}
+                        values.append(data)
+                        if ( counter == 100000):
+                            self.dbSave(values)
+                            counter = 0
+                            values = []
+                if counter > 0:
+                    self.dbSave(values)
+
         return values
 
 

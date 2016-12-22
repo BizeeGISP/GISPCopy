@@ -32,7 +32,7 @@ class ImportUrls:
         if lExcel:
             self.ImportFromExcel()
         else:
-            SecurePath = "C:\ProgramData\MySQL\MySQL Server 5.7\Uploads"
+            SecurePath = r"C:\ProgramData\MySQL\MySQL Server 5.7\Uploads"
             #self.writecsv(filename, self.ImportFromCSV())
             data = self.ImportFromCSV()
             #if len(data) >0:
@@ -48,7 +48,8 @@ class ImportUrls:
 
     def ImportFromExcel(self):
         values = []
-        wb = openpyxl.load_workbook('data\url\url.xlsx')
+        print ("Hello Vivek")
+        wb = openpyxl.load_workbook(r"data\urls\url.xlsx")
         sheets = wb.get_sheet_names()
         for sheet in sheets:
             sheetdata = wb.get_sheet_by_name(sheet)

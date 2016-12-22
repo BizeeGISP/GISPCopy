@@ -1,0 +1,3 @@
+
+CONS_EPS_NEW = 0   ##### New Record
+LIST_MAX_LEN = 1000000

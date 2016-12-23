@@ -2,7 +2,8 @@
 import requests
 import time
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
+#from urllib.parse import urlparse
+import urlparse
 import E2_Form
 #import E2_Regions
 import pika
@@ -199,15 +200,15 @@ class ProcessPage:
 
         return url
 
-    def isFirstCharacter(str, character):
+    def isFirstCharacter(self, str, character):
 
         return str.find(character, 0, 1) > -1
 
-    def isJavaScript(str):
+    def isJavaScript(self, str):
 
         return str.find('javascript', 0, len(str)) > -1
 
-    def isURLExist(str, lists, position=0):
+    def isURLExist(self, str, lists, position=0):
         lReturn = False
         for row in lists:
             if str == row[position]:

@@ -17,34 +17,36 @@ class log:
         logging.basicConfig(filename= self.logger_path + filename + "_"+ str(date.today()) + '.log', format='%(asctime)s - %(levelname)s - %(message)s',
                             level=level)
 
+    def pprint(self, args, kwargs):
+        print(args, kwargs)
     def error(self, msg, *args, **kwargs):
 
         if self.CALL_PRINT:
-            print(msg, *args, **kwargs)
+            self.pprint(msg, args)
         else:
             logging.error(msg, *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
         if self.CALL_PRINT:
-            print(msg, *args, **kwargs)
+            self.pprint(msg, args)
         else:
             logging.info(msg, *args, **kwargs)
 
     def warning(self,msg, *args, **kwargs):
         if self.CALL_PRINT:
-            print(msg, *args, **kwargs)
+            self.pprint(msg, args)
         else:
             logging.warning(msg, *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
         if self.CALL_PRINT:
-            print(msg, *args, **kwargs)
+            self.pprint(msg, args)
         else:
             logging.debug(msg, *args, **kwargs)
 
     def critical(self, msg, *args, **kwargs):
         if self.CALL_PRINT:
-            print(msg, *args, **kwargs)
+            self.pprint(msg, args)
         else:
             logging.critical(msg, *args, **kwargs)
 

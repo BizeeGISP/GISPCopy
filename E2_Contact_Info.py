@@ -1,11 +1,8 @@
 # -*- encoding: utf-8 -*-
-
 import re
 import time
 
-import requests
-import logging
-from bs4 import BeautifulSoup
+
 import phonenumbers
 import pycountry
 from langdetect import detect
@@ -88,7 +85,7 @@ class ContactDetails:
     def GetCountryfromPhone(self, phone):
         pn = phonenumbers.parse(phone)
         country =  pycountry.countries.get(alpha_2=region_code_for_number(pn))
-        print(country.name)
+
         return country.name
 
     def GetEmailId(self):
@@ -100,7 +97,8 @@ class ContactDetails:
             if len(results) > 0:
                 if not results in email:
                     email.append(results)
-        print( "Email ID:", email)
+
+        return email
 
 
     def LangDetect(self):
@@ -111,5 +109,6 @@ class ContactDetails:
                 data += string
         return detect(data)
 
-ContactDetails()
+
+
 

@@ -1,5 +1,3 @@
-import configUtilities
-
 CONS_EPS_NEW = 0   ##### New Record
 CONS_EPS_MESSAGE_PUSHED_TO_QUEUE = 1
 LIST_PROC_MAX = 100000

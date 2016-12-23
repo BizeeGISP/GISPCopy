@@ -1,7 +1,6 @@
 # -*- encoding: utf-8 -*-
 import os
 import requests
-import time
 from bs4 import BeautifulSoup
 
 
@@ -37,6 +36,7 @@ def isFirstCharacter(str, character):
 def isJavaScript(str):
     return str.find('javascript', 0, len(str)) > -1
 
+
 def getBaseURL(baseURL, href):
     url = None
     if "http" in href:
@@ -47,12 +47,14 @@ def getBaseURL(baseURL, href):
 
     return url
 
+
 def GetContactPageURL(link_text, link_href, baseURL):
     url = None
     if ("Contact" in link_text) or ("Contact" in link_href):
         url = getBaseURL(baseURL, link_href)
 
     return url
+
 
 def findContactPageURL(lLinks, baseURL):
     for link in lLinks:

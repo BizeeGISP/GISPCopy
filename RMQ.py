@@ -1,5 +1,5 @@
+# -*- encoding: utf-8 -*-
 import pika
-import time
 import configUtilities
 
 class RMQ_Client:

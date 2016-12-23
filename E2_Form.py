@@ -1,15 +1,9 @@
 # -*- encoding: utf-8 -*-
-import sys
 
 import time
-#import db
-import requests
-import logging
-import datetime
-from bs4 import BeautifulSoup
 
-# reload(sys)
-# sys.setdefaultencoding('UTF8')
+
+
 
 
 class WebForm:
@@ -31,52 +25,37 @@ class WebForm:
     element_lookup = []
 
     def __init__(self, soup):
-        now = datetime.datetime.now()
-        date = now.strftime(" %Y-%m-%d ")
 
-        self.soup = soup
+         self.ProcessPage()
 
-        # print date, type(date)
-        Format = '%(asctime)s - %(levelname)s - %(message)s'
-        LOG_FILENAME = 'log\Engine3' + date + '.log'
-
-        logging.basicConfig(filename=LOG_FILENAME, format=Format, level=logging.DEBUG)
-
-        logging.info("ENGINE 3 PROCESS STARTS")
-        startTime = time.time()
-
-        formData = self.ProcessPage()
-        processSec = time.time() - startTime
-
-        logging.info("Time consumed: " + str(processSec))
-        #print "Time consumed: ", time.time() - startTime
-
-        return formData
 
 
     def ProcessPage(self):
-        forms = self.soup.find_all('form')
-        pdata = 0
-        nform = 0
         processData = []
+        try:
+            forms = self.soup.find_all('form')
+            pdata = 0
+            nform = 0
 
-        for form in forms:
-            nform +=1
-            formElement = form.find_all()
-            nLen = len(formElement)
-            i = 0
-            for tag in formElement:
-                i +=1
-                #print "Form: " + str(nform) + " | "+ str(i) + "/" + str(nLen) + " | " + tag.name, tag
-                data = self.ProcessElement(tag)
-                if len(data) > 0:
-                    data[0] = self.url_id
-                    data[1] = nform
-                    #print "Data -->", data
-                    processData.append(data)
-                    pdata = len(processData)
-            logging.info("ProcessData ---> " + str(pdata)+"|" +str(processData))
-            print("ProcessData ---> " + str(len(processData)), processData)
+            for form in forms:
+                nform +=1
+                formElement = form.find_all()
+                nLen = len(formElement)
+                i = 0
+                for tag in formElement:
+                    i +=1
+                    #print "Form: " + str(nform) + " | "+ str(i) + "/" + str(nLen) + " | " + tag.name, tag
+                    data = self.ProcessElement(tag)
+                    if len(data) > 0:
+                        data[0] = self.url_id
+                        data[1] = nform
+                        #print "Data -->", data
+                        processData.append(data)
+                        pdata = len(processData)
+                self.log.info("ProcessData ---> " + str(pdata)+"|" +str(processData))
+        except Exception as e:
+            print(e, "Error while reading Soup.")
+
         return processData
 
     def ProcessElement(self,element):
@@ -106,7 +85,7 @@ class WebForm:
         tag_value       = self.GetDictKeyValue( attr, 'value')
         element_id      = self.GetElementLookupId()
             #cont_url_id, form, tag_name, tag_id, label_id, name_id, placeholder_id, content_id, type, value, element_id, status
-        return [ 0, 0, element.name, tag_id, tag_label, tag_name, tag_placeholder, tag_content, tag_type, tag_value, element_id, 'New' ]
+        return [0, 0, element.name, tag_id, tag_label, tag_name, tag_placeholder, tag_content, tag_type, tag_value, element_id, 'New' ]
 
     def GetElementLookupId(self):
         resultId = 0
@@ -127,9 +106,9 @@ class WebForm:
                 self.element_lookup.append(args[2])
           return resultId
        except Exception as e:
-          logging.debug("error while getting ID")
-          logging.warning(e)
-          #print e,"error while getting ID"
+            self.log.debug("error while getting ID")
+            self.log.info(e)
+
 
     def GetDictKeyValue(self, dictAttr, key):
         keys = dictAttr.keys()
@@ -173,9 +152,9 @@ class WebForm:
             try:
                 print("Decoding  ", e)
                 time.sleep(2)
-                logging.warning(str(e),"Error while building tag content")
+                self.log.warning(str(e),"Error while building tag content")
             except Exception as e:
-                print("logging error",e)
+                self.log.error("logging error",e)
             #print e, "Error while building tag content"
 
         return labelName
@@ -202,10 +181,10 @@ class WebForm:
             elif ( key == 'placeholder'):
                 procedure = "Get_Lookup_Placeholder_Id"
 
-            con = self.dbConnection(True)
-            results_args = con.callproc(procedure, [value, 0, 0 ] )
-            self.dbConnect.commit()
-            #print "Result: ", results_args
+            # con = self.dbConnection(True)
+            # results_args = con.callproc(procedure, [value, 0, 0 ] )
+            # self.dbConnect.commit()
+            # #print "Result: ", results_args
         return results_args
 
 
@@ -264,5 +243,5 @@ class WebForm:
 
 
 
-#WebForm()
+
 

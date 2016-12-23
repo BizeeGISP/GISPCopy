@@ -1,5 +1,5 @@
+# -*- encoding: utf-8 -*-
 import geograpy
-
 
 def ContactUsPage(soup):
     strings = soup.strings

@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 import openpyxl
 import csv
 import time
@@ -61,9 +62,7 @@ class ImportUrls:
             self.ProcessCSV(self.URL_FILE_PATH + name)
 
     def ProcessCSV(self, filename):
-
         try:
-
             with open(filename, 'r') as f:
                 reader = csv.reader(f)
                 counter = 0
@@ -99,6 +98,7 @@ class ImportUrls:
         mdb.close()
         timeconsSec = time.time() - startTime
         self.log.info( " Time consumed " + str(timeconsSec) + "to save" + str(self.million)  + " Thousand")
+
     def GetTopLevelDomain(self, url):
         return url[url.find(".") + 1:].rstrip("/")
 

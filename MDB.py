@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 import configUtilities
 from pymongo import MongoClient
 from bson.objectid import ObjectId

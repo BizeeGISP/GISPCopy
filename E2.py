@@ -1,8 +1,4 @@
 # -*- encoding: utf-8 -*-
-import Utility
-import time
-import logging
-import datetime
 import requests
 import time
 from bs4 import BeautifulSoup
@@ -12,9 +8,8 @@ import E2_Form
 import pika
 import configUtilities
 import BizeeCons
-import sys
-# reload(sys)
-# sys.setdefaultencoding('UTF8')
+import BizEE
+import MDB
 
 class ProcessPage:
     Q_server = configUtilities.getProperties('QUEUE-RMQ', 'Q.server')
@@ -34,161 +29,128 @@ class ProcessPage:
 
     def __init__(self):
 
-        now = datetime.datetime.now()
-        date = now.strftime(" %Y-%m-%d ")
-
-        #print date, type(date)
-        Format = '%(asctime)s - %(levelname)s - %(message)s'
-        LOG_FILENAME = 'log\Engine2' + date + '.log'
-
-        logging.basicConfig(filename=LOG_FILENAME, format=Format,level=logging.DEBUG)
-
-        logging.info("ENGINE 2 PROCESS STARTS")
-        startTime = time.time()
+        startTicks = time.time()
+        self.log = BizEE.log('E2')
+        self.log.info('ENGINE 2 PROCESS STARTS')
 
         self.getRMQ_Channel()
         self.consume()
         self.close_RMQ()
 
+        self.log.info("E2 Consumed: " + str(time.time() - startTicks) + " second to process...")
 
-        #self.ExecuteURLS()
-        processSec = time.time() - startTime
+    def getRMQ_Channel(self):
+        credentials = pika.PlainCredentials(self.Q_user, self.Q_pass)
+        self.rmq_connection = pika.BlockingConnection(
+            pika.ConnectionParameters(self.Q_server, int(self.Q_port), '/', credentials))
+        self.rmq_channel = self.rmq_connection.channel()
+        self.rmq_channel.queue_declare(queue=BizeeCons.CONS_E1_1_QUEUE, durable=True)
 
-        logging.info("Time consumed: " + str( processSec ))
-        #print "Time consumed: ", time.time() - startTime
-
-    def ExecuteURLS(self):  # Need to Comment / Remove this code
-        self.InsertQuery = """INSERT INTO home_page_links (link_text, links, home_url_id) VALUES (%s,%s, %s)"""
-        self.db = db.DB()
-        statement = """select id, url from urls where status = 'new' and id > 0 limit 10"""
-        rows = self.db.executeSelectAll(statement)
-        nLen = len(rows)
-        nCtr = 0
-        for row in rows:
-            id = row[0]
-            url = row[1]
-            self.ProcessUrl(url)
-
-        self.db.close()
+    def close_RMQ(self):
+        self.rmq_connection.close()
 
     def callback(self, ch, method, properties, body):
-        value = body.split(",")
+        message = body.decode("utf-8")
+        value = message.split(",")
+        if len(value) == 3:
+            url_type = value[0]
+            url = value[1]
+            _id = value[2]
+        else:
+            url_type = BizeeCons.CONS_HOME_LINK_TABLE
+            url = value[0]
+            _id = value[1]
 
-        url = value[0]
-        url_type = value[1] ## D: Default URL, F: Foreign URL, C: Contact Page URL
+        self.ProcessUrl(url_type, url, _id)
 
-        self.ProcessUrl( url, url_type)
-
-    def Execute_E2(self):
-        self.idealTime = 0
-        while True:
-            if self.RMQ.isMessage():
-                self.idealTime = 0
-                self.Msg_Time = time.time()
-                self.ProcessUrl()
-            else:
-                self.idealTime = time.time() - self.Msg_Time
-            if self.idealTime >= self.timeout:
-                break
-
-    def Read_msg_Q(self):
-        #try:
-            if self.RMQ.ReConnect():
-                self.ReadMQ()
-            else:
-                print ("Exception while connecting to RabbitMQ Server")
-                # Log Exception
-
-            # rmqConn = RMQ()
-            # url = None
-
-
-        #return url
-
-
+    def consume(self):
+        try:
+            self.rmq_channel.basic_consume(self.callback,
+                                           queue=BizeeCons.CONS_E1_1_QUEUE,
+                                           no_ack=True)
+            self.rmq_channel.start_consuming()
+        except Exception as e:
+            self.log.error("Error while consuming message from the queue: " + BizeeCons.CONS_E1_1_QUEUE + " | " + str(e))
 
     def GetFQDN_URL(self, url):
         if not "http://" in url:
             url = str("http://" + url)
         return url.strip()
 
-    def ProcessUrl(self, url_type, url, id):
-        self.url = self.GetFQDN_URL(self.url)
-        self.soup = self.GetPageSoup()
-        formData = E2_Form.WebForm(self.soup)
-        #regionData = E2_Regions.ContactUsPage(self.soup)
-        #ContactData =
+    def ProcessUrl(self, url_type, url, _id):
+        url = self.GetFQDN_URL(url)
+        self.soup = self.GetPageSoup(url)
+        if self.soup != None:
+            formData = E2_Form.WebForm(self.soup)
+            #regionData = E2_Regions.ContactUsPage(self.soup)
+            #ContactData =
 
-        self.C_URLS = []
-        self.F_URLS = []
-        if   url_type == "D":   ### D: Default URLS
-            self.GetPageUrls(self, url, id)    ### This function is creating two list C: Contact URL Link List and F: Foreign URL List.
-        elif url_type == "F":  ### F: Foreign URLS
-            self.GetPageUrls(self, url, id)    ### This function is creating two list C: Contact URL Link List and F: Foreign URL List.
-            self.F_URLS = []   #### Over here we are intentionally making the Foreign link empty, as we don't want to process recursive links from Foreign Link. We will handle this on 2nd Phase of Project
+            self.C_URLS = []
+            self.F_URLS = []
+            if   url_type == BizeeCons.CONS_HOME_LINK_TABLE:   ### D: Default URLS
+                self.GetPageUrls(url, _id)    ### This function is creating two list C: Contact URL Link List and F: Foreign URL List.
+                mdb = MDB.MdbClient("GISP")
+                mdb.Collection(BizeeCons.CONS_CONTACT_LINK_TABLE  + "_URLs")
+                mdb.insert_many({"url": self.C_URLS})
+                mdb.Collection(BizeeCons.CONS_FOREIGN_LINK_TABLE + "_URLs")
+                mdb.insert_many({"url": self.F_URLS})
+                mdb.close()
+            elif url_type == BizeeCons.CONS_FOREIGN_LINK_TABLE:  ### F: Foreign URLS
+                self.GetPageUrls(url, _id)    ### This function is creating two list C: Contact URL Link List and F: Foreign URL List.
+                self.F_URLS = []  #### Over here we are intentionally making the Foreign link empty, as we don't want to process recursive links from Foreign Link. We will handle this on 2nd Phase of Project
 
-
-        #if len(self.F_URLS) > 0:
-
-        #
-        # try:
-        #     PageUrls = self.GetPageUrls(url, id)
-        #     self.SaveData(self.InsertQuery, PageUrls)
-        #     self.UpdateUrls(id, url)
-        # except:
-        #     try:
-        #         self.SaveSingleData(self.InsertQuery, PageUrls)
-        #         self.UpdateUrls(id, url)
-        #     except:
-        #         self.db = db.DB()
+                mdb = MDB.MdbClient("GISP")
+                mdb.Collection(BizeeCons.CONS_CONTACT_LINK_TABLE + "_URLs")
+                mdb.insert_many({"url": self.C_URLS})
 
 
-    def GetPageSoup(self):
+
+    def GetPageSoup(self, url):
         soup = None
         try:
-            r = requests.get(self.url)
+            r = requests.get(url)
             soup = BeautifulSoup(r.content, "lxml")
         except Exception as e:
-            print(e, "Connection Exception : " + self.url)
+            self.log.error(e, "Connection Exception : " + url)
             #### Append Logging Here
         return soup
 
-    def UpdateUrls(self, id, url):
-        idStr = str(id)
-        try:
-            self.updateQuery = "update urls set status = 'Processed' where id = " + idStr
-            self.db.execute(self.updateQuery)
-            self.db.commit()
-        except Exception as e:
+    # def UpdateUrls(self, id, url):
+    #     idStr = str(id)
+    #     try:
+    #         self.updateQuery = "update urls set status = 'Processed' where id = " + idStr
+    #         self.db.execute(self.updateQuery)
+    #         self.db.commit()
+    #     except Exception as e:
+    #
+    #         logging.debug("Error while updating: " + self.updateQuery+ "|" +url)
+    #         logging.warning(e)
+    #          #print self.updateQuery
+    #          #print  e, "Updating Error: ", url + " | " + idStr
+    #
+    # def SaveSingleData(self, query, values):
+    #     nCtr = 0
+    #     nLen = len(values)
+    #     for data in values:
+    #         try:
+    #             nCtr+=1
+    #             if (nCtr % 50) == 0:
+    #                 logging.info(" Data Processing: " + str(nCtr)+ "/" + str(nLen))
+    #                 #print "Data Processing: ", str(nCtr) + "/" + str(nLen)
+    #             self.db.execute(query, data)
+    #             self.db.commit()
+    #         except Exception as e:
+    #
+    #             logging.debug("Internal loop Exception")
+    #             logging.warning(e)
+    #
+    #             #print e, "Internal loop Exception"
+    #
+    # def SaveData(self, query, values):
+    #     self.db.executemany(query, values)
+    #     self.db.commit()
 
-            logging.debug("Error while updating: " + self.updateQuery+ "|" +url)
-            logging.warning(e)
-             #print self.updateQuery
-             #print  e, "Updating Error: ", url + " | " + idStr
-
-    def SaveSingleData(self, query, values):
-        nCtr = 0
-        nLen = len(values)
-        for data in values:
-            try:
-                nCtr+=1
-                if (nCtr % 50) == 0:
-                    logging.info(" Data Processing: " + str(nCtr)+ "/" + str(nLen))
-                    #print "Data Processing: ", str(nCtr) + "/" + str(nLen)
-                self.db.execute(query, data)
-                self.db.commit()
-            except Exception as e:
-
-                logging.debug("Internal loop Exception")
-                logging.warning(e)
-
-                #print e, "Internal loop Exception"
-
-    def SaveData(self, query, values):
-        self.db.executemany(query, values)
-        self.db.commit()
-
-    def GetPageUrls(self, url, id):
+    def GetPageUrls(self, url, _id):
         try:
             hrefList = self.GetPageLinks(url)
             self.C_URLS = []
@@ -199,14 +161,13 @@ class ProcessPage:
                     href_link = href[0]
                     href_text = href[1]
                     if baseDomain in href_link:
-                        c_url_str = Utility.GetContactPageURL(href_text, href_link, url)
-                        if (c_url_str != None) and not (Utility.isURLExist(c_url_str, self.C_URLS)):
-                            self.C_URLS.append((c_url_str, id, 'New'))
+                        c_url_str = self.GetContactPageURL(href_text, href_link, url)
+                        if (c_url_str != None) and not (self.isURLExist(c_url_str, self.C_URLS)):
+                            self.C_URLS.append((c_url_str, _id, 'New'))
                     else:
-                        self.F_URLS.append((href_text, href_link, id))
-
+                        self.F_URLS.append((href_text, href_link, _id))
         except Exception as e:
-            print(e)
+            self.log.error(e)
 
     def GetPageLinks(self, url):
 
@@ -217,15 +178,33 @@ class ProcessPage:
         for link in links:
             href = str(link.get('href')).strip()
 
-            if not Utility.isFirstCharacter(href, '#') and not self.isURLExist(href, hrefs) and not Utility.isJavaScript(href):
+            if not self.isFirstCharacter(href, '#') and not self.isURLExist(href, hrefs) and not self.isJavaScript(href):
                 hrefs.append((href, link.text.strip()))
         return hrefs
+
+    def getBaseURL(self, baseURL, href):
+        url = None
+        if "http" in href:
+            url = href
+        else:
+            if href.find('/', 0, 1) > -1:
+                url = baseURL + '/' + href.lstrip('/')
+
+        return url
+
+    def GetContactPageURL(self,link_text, link_href, baseURL):
+        url = None
+        if ("Contact" in link_text) or ("Contact" in link_href):
+            url = self.getBaseURL(baseURL, link_href)
+
+        return url
 
     def isFirstCharacter(str, character):
 
         return str.find(character, 0, 1) > -1
 
     def isJavaScript(str):
+
         return str.find('javascript', 0, len(str)) > -1
 
     def isURLExist(str, lists, position=0):
@@ -239,34 +218,9 @@ class ProcessPage:
     def GetDomain(self, url):
         parsed_uri = urlparse(url)
         domain = '{uri.netloc}'.format(uri=parsed_uri)
-        print(domain)
         return domain
 
 
-    def getRMQ_Channel(self):
-        credentials = pika.PlainCredentials(self.Q_user, self.Q_pass)
-        self.rmq_connection = pika.BlockingConnection(pika.ConnectionParameters(self.Q_server, int(self.Q_port), '/', credentials))
-        self.rmq_channel = self.rmq_connection.channel()
-        self.rmq_channel.queue_declare(queue=BizeeCons.CONS_E1_1_QUEUE, durable=True)
-
-
-    def close_RMQ(self):
-        self.rmq_connection.close()
-
-    def callback(self, ch, method, properties, body):
-        message = body.decode("utf-8")
-        value = message.split(",")
-        url_type = value[0]
-        url      = value[1]
-        _id      = value[2]
-
-        self.ProcessUrl(url_type, url, _id)
-
-    def consume(self):
-        self.rmq_channel.basic_consume(self.callback,
-                                   queue=BizeeCons.CONS_E1_1_QUEUE,
-                                   no_ack=True)
-        self.rmq_channel.start_consuming()
 
 
 ProcessPage()

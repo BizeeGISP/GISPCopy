@@ -2,22 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fffe8e67-3872-4d49-abea-9de898959a43" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/GISP.iml" afterPath="$PROJECT_DIR$/.idea/GISP.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/BizEE.py" afterPath="$PROJECT_DIR$/BizEE.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/BizeeCons.py" afterPath="$PROJECT_DIR$/BizeeCons.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ConfigFile.properties" afterPath="$PROJECT_DIR$/ConfigFile.properties" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/E1.py" afterPath="$PROJECT_DIR$/E1.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/E1_1.py" afterPath="$PROJECT_DIR$/E1_1.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/E2.py" afterPath="$PROJECT_DIR$/E2.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/E2_Contact_Info.py" afterPath="$PROJECT_DIR$/E2_Contact_Info.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/E2_Form.py" afterPath="$PROJECT_DIR$/E2_Form.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/E2_Regions.py" afterPath="$PROJECT_DIR$/E2_Regions.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ImportStuff.py" afterPath="$PROJECT_DIR$/ImportStuff.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/MDB.py" afterPath="$PROJECT_DIR$/MDB.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/RMQ.py" afterPath="$PROJECT_DIR$/RMQ.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Utility.py" afterPath="$PROJECT_DIR$/Utility.py" />
     </list>
     <ignored path="GISP.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -671,7 +656,14 @@
       <option name="project" value="LOCAL" />
       <updated>1482412272079</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="path is created instead of one csv file in E1">
+      <created>1482499965434</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1482499965434</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TodoView">

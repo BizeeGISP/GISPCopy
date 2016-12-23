@@ -29,27 +29,24 @@ class RMQ_Client:
     def getChannel(self):
         return self.connection.channel()
 
-    def declQueue(self,channel,q_name):
-        channel.queue_declare(queue=q_name)
+    def queue_declare(self,q_name):
+        self.queue_name = q_name
+        return self.channel.queue_declare(queue=self.queue_name)
 
 
-    def publish(self, msgBody):
-        self.channel.basic_publish(exchange='',
+    def basic_publish(self, msgBody):
+        return self.channel.basic_publish(exchange='',
                               routing_key=self.queue_name,
                               body=msgBody)
-        print(" [x] Message Sent...")
 
 
     def callback(self, ch, method, properties, body):
-        time.sleep(2)
-
         print(" [x] Received %r" % body)
 
     def consume(self):
         self.channel.basic_consume(self.callback,
                               queue=self.q_name,
                               no_ack=True)
-        print(' [*] Waiting for messages. To exit press CTRL+C')
         self.channel.start_consuming()
 
     def close(self):

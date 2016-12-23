@@ -3,7 +3,6 @@ import BizeeCons
 import configUtilities
 import pika
 
-
 class PushData2RMQ:
     mdb = None
     Q_server = configUtilities.getProperties('QUEUE-RMQ', 'Q.server')
@@ -22,10 +21,25 @@ class PushData2RMQ:
         self.mdb.close()
 
     def Get_Publish_URLs(self, collection):
-        self.mdb.Collection(collection)
-        Urls = self.mdb.find_data({ "eps": BizeeCons.CONS_EPS_NEW})
-        print(collection, Urls)
-        self.publish_data(Urls)
+        try:
+            self.mdb.Collection(collection)
+            cursor = self.mdb.find({ "eps": BizeeCons.CONS_EPS_NEW})
+            try:
+                iCtr = 0
+                #self.getRMQ_Channel()
+                for doc in cursor:
+                    iCtr += 1
+                    url = doc['url']
+                    _id = self.mdm.ObjectId_toString(doc['_id'])
+
+                    message = url + ","+ str(_id)
+                    print(message)
+                    #self.publish_queue(message)
+                #self.close_RMQ()
+            except Exception as e:
+                print( "Error while connecting RMQ Server: ", e)
+        except Exception as e:
+            print("Error while quaring Database: ", e)
 
     def getRMQ_Channel(self):
         self.rmq_connection = pika.BlockingConnection(pika.ConnectionParameters(self.Q_server))
@@ -37,23 +51,6 @@ class PushData2RMQ:
 
     def publish_queue(self, message):
         self.rmq_channel.basic_publish(exchange='', routing_key=self.rmq_queue, body=message, properties=pika.BasicProperties(delivery_mode = 2,))
-
-
-    def publish_data(self, datalist):
-        #self.getRMQ_Channel()
-        for data in datalist:
-            url = data['url']
-            _id = data['_id']
-            #message =
-            #self.publish_queue(message)
-
-            print (url, _id)
-            print (type(url), type(_id))
-        #self.close_RMQ()
-
-
-
-
 
 
 

@@ -1,23 +1,31 @@
 import MDB
+import BizeeCons
 import configUtilities
 import os
 import time
-from datetime import date
+import datetime
 import Utility
 
 
-CSV_PATH = configUtilities.getProperties('E1-CSV', 'PATH')
-dir_files = os.listdir(CSV_PATH)
-print( [files for files in dir_files if files.endswith(".csv")])
-try:
-    os.rename(CSV_PATH + 'in.csv', CSV_PATH + 'in.csv' + "_"+ str(date.today()))
-except Exception as e:
-    print(e)
+# CSV_PATH = configUtilities.getProperties('E1-CSV', 'PATH')
+# dir_files = os.listdir(CSV_PATH)
+# print( [files for files in dir_files if files.endswith(".csv")])
+# try:
+#     os.rename(CSV_PATH + 'in.csv', CSV_PATH + 'in.csv' + "_"+ str(date.today()))
+# except Exception as e:
+#     print(e)
 
-# mdb = MDB.MdbClient("GISP")
-# mdb.Collection("URLs")
+mdb = MDB.MdbClient("GISP")
+mdb.Collection("H_URLs")
+
+Obj_Id = mdb.ObjectId('585bc74445711325008460b7')
+
+date = datetime.datetime.now()
+
+print(date, type(date))
 
 #print(mdb.count({"Status": ""}))
+mdb.update_one({"_id" : Obj_Id}, {'$set': {"eps": BizeeCons.CONS_EPS_MESSAGE_PUSHED_TO_QUEUE, "eps_dt": date}} )
 
 # returnList = mdb.find_data({ "Status": "New"}, "URL", False)
 # Utility.printList(returnList)
@@ -38,5 +46,5 @@ except Exception as e:
 
 
 
-# mdb.close()
+mdb.close()
 #mdb.CreateDB("GISP_TEST")

@@ -2,7 +2,7 @@
 import sys
 
 import time
-import db
+#import db
 import requests
 import logging
 import datetime
@@ -264,5 +264,5 @@ class WebForm:
 
 
 
-WebForm()
+#WebForm()
 

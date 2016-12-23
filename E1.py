@@ -1,13 +1,12 @@
 import openpyxl
 import csv
 import time
-import logging
-import datetime
+import BizEE
 import MDB
 import configUtilities
 import os
+import BizeeCons
 from datetime import date
-
 
 
 class ImportUrls:
@@ -15,37 +14,25 @@ class ImportUrls:
     writer = None
     connection = None
     million = 0
-    CSV_PATH = configUtilities.getProperties('E1-CSV', 'PATH')
+
+    URL_FILE_PATH = configUtilities.getProperties('E1-FILES', 'URL_FILE_PATH')
+    URL_FILE_TYPE = configUtilities.getProperties('E1-FILES', 'URL_FILE_TYPE')
+    URL_DATA_POS  = int(configUtilities.getProperties('E1-FILES', 'URL_DATA_POS' ))
+
 
     def __init__(self):
-        #tempDir = Utility.CheckAndCreateDirectory(Utility.getWorkingDirectory() + "\temp")
         startTicks = time.time()
 
-        now = datetime.datetime.now()
-        date = now.strftime("%Y-%m-%d")
-
-        logging.basicConfig(filename='log\E1 ' + date + '.log', format='%(asctime)s - %(levelname)s - %(message)s',
-                            level=logging.DEBUG)
-        logging.info("ENGINE 1 PROCESS STARTS")
-
-
-        lExcel = False
-        if lExcel:
-            self.ImportFromExcel()
-        else:
-           #Securepath= "C:\ProgramData\MySQL\MySQL Server 5.7\Uploads"
-            # self.writecsv(filename, self.ImportFromCSV())
-            data = self.ProcessCSV()
-            # if len(data) >0:
-            #self.dbSave()
-
-            # basefilename = os.path.join(os.getcwd(), filename)
-            # self.dbSaveFromFile(basefilename)
-
-        datagenSec = time.time() - startTicks
-
-        logging.info("Data generation consumed Time: " + str(datagenSec))
-        print( time.time() - startTicks, " Data generation Time consumed ")
+        self.log = BizEE.log('E1')
+        self.log.info('ENGINE 1 PROCESS STARTS')
+        try:
+            if self.URL_FILE_TYPE == "EXCEL":
+                self.ImportFromExcel()
+            else:
+                self.ImportFromCSV()
+                self.log.info("E1 Consumed: " + str(time.time() - startTicks) + " second to process...")
+        except Exception as e:
+            self.log.error("Data generation consumed Time: " + str(time.time() - startTicks))
 
     def ImportFromExcel(self):
         values = []
@@ -59,10 +46,7 @@ class ImportUrls:
 
                 url = sheetdata['A' + str(row)].value
                 if (url != None):
-                    # print top_level_domain
                     data = (url, self.GetTopLevelDomain(url), 'New')
-
-                    # print data
                     values.append(data)
                 row += 1
         return values
@@ -71,12 +55,12 @@ class ImportUrls:
         dir_files = os.listdir(path_to_dir)
         return [files for files in dir_files if files.endswith(suffix)]
 
-    def ProcessCSV(self):
-        files = self.GetCSV_files(self.CSV_PATH)
+    def ImportFromCSV(self):
+        files = self.GetCSV_files(self.URL_FILE_PATH)
         for name in files:
-            self.ImportFromCSV(self.CSV_PATH + name)
+            self.ProcessCSV(self.URL_FILE_PATH + name)
 
-    def ImportFromCSV(self, filename):
+    def ProcessCSV(self, filename):
 
         try:
 
@@ -86,32 +70,27 @@ class ImportUrls:
                 values = []
                 for row in reader:
 
-                    url = row[0]
+                    url = row[self.URL_DATA_POS]
                     if (url != None):
                         counter += 1
                         data = {"url": url,"tld": self.GetTopLevelDomain(url),"eps":0}
                         values.append(data)
-                        if ( counter == 100000):
+                        if ( counter == BizeeCons.LIST_PROC_MAX):
                             self.dbSave(values)
                             counter = 0
                             values = []
                 if counter > 0:
                     self.dbSave(values)
             f.close()
-            os.rename(self.CSV_PATH + f, self.CSV_PATH + f + "_" + str(date.today()))
+            os.rename(self.URL_FILE_PATH + f, self.URL_FILE_PATH + f + "_" + str(date.today()))
         except Exception as e:
-            logging.error(e)
-            #print(e)
-
-        return values
+            self.log.error(e)
 
 
     def dbSave(self, values=None):
         val=len(values)
         self.million += val
-        logging.info("Saving: " + str(val))
-
-        print("Saving : ", val)
+        self.log.info("Saving: " + str(val))
 
         startTime = time.time()
         mdb = MDB.MdbClient("GISP")
@@ -119,9 +98,7 @@ class ImportUrls:
         mdb.insert_many(values)
         mdb.close()
         timeconsSec = time.time() - startTime
-        logging.info( " Time consumed " + str(timeconsSec) + "to save" + str(self.million)  + " Million")
-        print( timeconsSec, " Time consumed to save " + str(self.million) + " Thousand" )
-
+        self.log.info( " Time consumed " + str(timeconsSec) + "to save" + str(self.million)  + " Thousand")
     def GetTopLevelDomain(self, url):
         return url[url.find(".") + 1:].rstrip("/")
 

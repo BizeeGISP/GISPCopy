@@ -1,7 +1,6 @@
 # -*- encoding: utf-8 -*-
 import Utility
 import time
-import db
 import logging
 import datetime
 import requests
@@ -9,12 +8,21 @@ import time
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import E2_Form
-import E2_Regions
+#import E2_Regions
+import pika
+import configUtilities
+import BizeeCons
 import sys
 # reload(sys)
 # sys.setdefaultencoding('UTF8')
 
 class ProcessPage:
+    Q_server = configUtilities.getProperties('QUEUE-RMQ', 'Q.server')
+    Q_port   = configUtilities.getProperties('QUEUE-RMQ', 'Q.port')
+    Q_user   = configUtilities.getProperties('QUEUE-RMQ', 'Q.user')
+    Q_pass   = configUtilities.getProperties('QUEUE-RMQ', 'Q.pass')
+    rmq_connection = None
+    rmq_channel    = None
 
     db = None
     updateQuery = ""
@@ -38,7 +46,11 @@ class ProcessPage:
         logging.info("ENGINE 2 PROCESS STARTS")
         startTime = time.time()
 
-        self.Execute_E2()
+        self.getRMQ_Channel()
+        self.consume()
+        self.close_RMQ()
+
+
         #self.ExecuteURLS()
         processSec = time.time() - startTime
 
@@ -100,11 +112,11 @@ class ProcessPage:
             url = str("http://" + url)
         return url.strip()
 
-    def ProcessUrl(self, url, url_type):
+    def ProcessUrl(self, url_type, url, id):
         self.url = self.GetFQDN_URL(self.url)
         self.soup = self.GetPageSoup()
         formData = E2_Form.WebForm(self.soup)
-        regionData = E2_Regions.ContactUsPage(self.soup)
+        #regionData = E2_Regions.ContactUsPage(self.soup)
         #ContactData =
 
         self.C_URLS = []
@@ -230,6 +242,31 @@ class ProcessPage:
         print(domain)
         return domain
 
+
+    def getRMQ_Channel(self):
+        credentials = pika.PlainCredentials(self.Q_user, self.Q_pass)
+        self.rmq_connection = pika.BlockingConnection(pika.ConnectionParameters(self.Q_server, int(self.Q_port), '/', credentials))
+        self.rmq_channel = self.rmq_connection.channel()
+        self.rmq_channel.queue_declare(queue=BizeeCons.CONS_E1_1_QUEUE, durable=True)
+
+
+    def close_RMQ(self):
+        self.rmq_connection.close()
+
+    def callback(self, ch, method, properties, body):
+        message = body.decode("utf-8")
+        value = message.split(",")
+        url_type = value[0]
+        url      = value[1]
+        _id      = value[2]
+
+        self.ProcessUrl(url_type, url, _id)
+
+    def consume(self):
+        self.rmq_channel.basic_consume(self.callback,
+                                   queue=BizeeCons.CONS_E1_1_QUEUE,
+                                   no_ack=True)
+        self.rmq_channel.start_consuming()
 
 
 ProcessPage()

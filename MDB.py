@@ -55,7 +55,7 @@ class MdbClient:
 
         return data
 
-    def ObjectId_toString(self, ObjId):
+    def ObjectId(self, ObjId):
         return ObjectId(ObjId)
 
     #### Library Based Methods ------ STARTS HERE -------  Refer the Pymongo Library for the properties, methods and functionality of the function.

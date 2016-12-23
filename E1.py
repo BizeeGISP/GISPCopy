@@ -5,7 +5,8 @@ import logging
 import datetime
 import MDB
 import configUtilities
-from os import listdir
+import os
+from datetime import date
 
 
 
@@ -34,7 +35,7 @@ class ImportUrls:
         else:
            #Securepath= "C:\ProgramData\MySQL\MySQL Server 5.7\Uploads"
             # self.writecsv(filename, self.ImportFromCSV())
-            data = self.ImportFromCSV()
+            data = self.ProcessCSV()
             # if len(data) >0:
             #self.dbSave()
 
@@ -66,18 +67,20 @@ class ImportUrls:
                 row += 1
         return values
 
-    def find_csv_filenames(self,path_to_dir, suffix=".csv"):
-        filenames = listdir(path_to_dir)
-        return [filename for filename in filenames if filename.endswith(suffix)]
+    def GetCSV_files(self,path_to_dir, suffix=".csv"):
+        dir_files = os.listdir(path_to_dir)
+        return [files for files in dir_files if files.endswith(suffix)]
 
+    def ProcessCSV(self):
+        files = self.GetCSV_files(self.CSV_PATH)
+        for name in files:
+            self.ImportFromCSV(self.CSV_PATH + name)
 
-    def ImportFromCSV(self):
+    def ImportFromCSV(self, filename):
 
-        filenames = self.find_csv_filenames(self.CSV_PATH)
-        print(filenames)
-        for name in filenames:
-            print("FileName", self.CSV_PATH + name)
-            with open(self.CSV_PATH + name, 'r') as f:
+        try:
+
+            with open(filename, 'r') as f:
                 reader = csv.reader(f)
                 counter = 0
                 values = []
@@ -94,6 +97,11 @@ class ImportUrls:
                             values = []
                 if counter > 0:
                     self.dbSave(values)
+            f.close()
+            os.rename(self.CSV_PATH + f, self.CSV_PATH + f + "_" + str(date.today()))
+        except Exception as e:
+            logging.error(e)
+            #print(e)
 
         return values
 

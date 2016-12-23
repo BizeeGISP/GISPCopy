@@ -50,7 +50,7 @@ class ContactDetails:
 
     def GetPhoneNumbers(self):
 
-        strings = soup.strings
+        strings = self.soup.strings
         for string in strings:
             string = string.replace("\n","")
 

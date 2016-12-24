@@ -62,7 +62,9 @@ class ImportUrls:
             self.ProcessCSV(self.URL_FILE_PATH + name)
 
     def ProcessCSV(self, filename):
+        self.million = 0
         try:
+            self.log.info("Processing File: " + filename)
             with open(filename, 'r') as f:
                 reader = csv.reader(f)
                 counter = 0
@@ -75,21 +77,22 @@ class ImportUrls:
                         data = {"url": url,"tld": self.GetTopLevelDomain(url),"eps":0}
                         values.append(data)
                         if ( counter == BizeeCons.LIST_PROC_MAX):
-                            self.dbSave(values)
+                            self.dbSave(values, filename)
                             counter = 0
                             values = []
                 if counter > 0:
-                    self.dbSave(values)
+                    self.dbSave(values, filename)
             f.close()
-            os.rename(self.URL_FILE_PATH + f, self.URL_FILE_PATH + f + "_" + str(date.today()))
+            self.log.info("Renaming File : " + filename)
+            os.rename(filename, filename + "_" + str(date.today()))
         except Exception as e:
             self.log.error(e)
 
 
-    def dbSave(self, values=None):
+    def dbSave(self, values, filename):
         val=len(values)
         self.million += val
-        self.log.info("Saving: " + str(val))
+        self.log.info("Saving: " + str(val) + " record from file: " + filename)
 
         startTime = time.time()
         mdb = MDB.MdbClient("GISP")
@@ -97,7 +100,7 @@ class ImportUrls:
         mdb.insert_many(values)
         mdb.close()
         timeconsSec = time.time() - startTime
-        self.log.info( " Time consumed " + str(timeconsSec) + "to save" + str(self.million)  + " Thousand")
+        self.log.info( "Time consumed to import "  + str(self.million)  + " record from file : " + filename + " in "+ str(round(timeconsSec,2)) + " seconds...")
 
     def GetTopLevelDomain(self, url):
         return url[url.find(".") + 1:].rstrip("/")

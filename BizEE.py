@@ -18,6 +18,7 @@ class log:
                             level=level)
 
     def pprint(self, args, kwargs):
+        print
         print(args, kwargs)
     def error(self, msg, *args, **kwargs):
 

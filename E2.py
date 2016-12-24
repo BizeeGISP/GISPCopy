@@ -3,7 +3,7 @@ import requests
 import time
 from bs4 import BeautifulSoup
 #from urllib.parse import urlparse
-import urlparse
+from urllib.parse import urlparse
 import E2_Form
 #import E2_Regions
 import pika
@@ -27,6 +27,7 @@ class ProcessPage:
     RMQ = None
     timeout = 60  #### 1 Min TimeOut.
     idealTime = 0
+    iCtr = 0
 
     def __init__(self):
 
@@ -51,6 +52,7 @@ class ProcessPage:
         self.rmq_connection.close()
 
     def callback(self, ch, method, properties, body):
+        self.iCtr += 1
         message = body.decode("utf-8")
         value = message.split(",")
         if len(value) == 3:
@@ -62,7 +64,9 @@ class ProcessPage:
             url = value[0]
             _id = value[1]
 
-        self.ProcessUrl(url_type, url, _id)
+        if ( self.iCtr % 1000) ==0:
+            print(value)
+        #self.ProcessUrl(url_type, url, _id)
 
     def consume(self):
         try:
